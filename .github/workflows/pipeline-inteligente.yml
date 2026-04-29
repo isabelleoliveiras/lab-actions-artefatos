@@ -1,0 +1,55 @@
+name: Pipeline Inteligente de Artefatos
+
+on:
+  # Regra 1: Execução Manual
+  workflow_dispatch:
+
+  # Regra 2: Agendamento diário às 02:00 AM
+  schedule:
+    - cron: '0 2 * * *'
+
+  # Regras 3 e 4: Filtros de Branch e Caminhos
+  push:
+    branches:
+      - 'feature/**' # Somente branches que começam com feature/ 
+    paths:
+      - 'src/**'     # Monitora toda a pasta src/ 
+      - '!src/docs/**' # Exceção: Ignora se a alteração for apenas em src/docs/
+
+jobs:
+  # Etapa 3: O Produtor de Artefatos
+  job_gerador:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Simular Construção (Build)
+        run: |
+          mkdir saida_build
+          echo "Relatório de performance 1" > saida_build/relatorio1.txt
+          echo "Relatório de testes 2" > saida_build/relatorio2.txt
+        # Cria a pasta e os arquivos de simulação
+
+      - name: Upload do Artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: meus-relatorios-oficiais
+          path: saida_build/
+
+  # Etapa 4: O Consumidor de Artefatos
+  job_auditoria:
+    runs-on: ubuntu-latest
+    needs: [job_gerador] # Garante que este job espere o anterior
+    steps:
+      - name: Download do Artefato
+        uses: actions/download-artifact@v4
+        with:
+          name: meus-relatorios-oficiais
+        # Recupera os arquivos gerados no job anterior
+
+      - name: Auditoria e Verificação
+        run: |
+          ls -R
+          cat relatorio1.txt
+        # Prova que os arquivos sobreviveram à troca de máquinas
